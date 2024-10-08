@@ -8,14 +8,14 @@ class Usuarios extends CI_Controller
         parent::__construct();
         $this->load->model('Usuario_model');
         $this->load->helper('url');
-        $this->load->library(['session', 'form_validation', 'upload']);
-        $this->load->library(['session', 'form_validation', 'email']);
+        $this->load->library(['session', 'form_validation', 'upload', 'email']);
         $this->load->config('email');
+
     }
 
     public function index()
     {
-        $data['usuarios'] = $this->Usuario_model->obtener_usuarios_activos();
+        $data = array("usuarios" => $this->Usuario_model->obtener_usuarios_activos());
         $this->load->view('templates/header');
         $this->load->view('templates/navbar');
         $this->load->view('templates/sidebar');
@@ -24,184 +24,233 @@ class Usuarios extends CI_Controller
     }
 
     public function agregar()
-{
-    if ($this->input->post()) {
-        // Configuración de las reglas de validación
-        $this->form_validation->set_rules('nombre', 'Nombre Completo', 'required|regex_match[/^[a-zA-Z\s]+$/]|min_length[3]|max_length[50]', [
-            'required' => 'El campo Nombre Completo es obligatorio.',
-            'regex_match' => 'El campo Nombre Completo debe contener solo letras.',
-            'min_length' => 'El campo Nombre Completo debe tener al menos 3 caracteres.',
-            'max_length' => 'El campo Nombre Completo debe tener como máximo 50 caracteres.'
-        ]);
-        $this->form_validation->set_rules('imagen', 'Foto de Perfil', 'callback_file_check');
-        $this->form_validation->set_rules('email', 'Email', 'required|valid_email|is_unique[usuarios.email]', [
-            'required' => 'El campo Email es obligatorio.',
-            'valid_email' => 'El campo Email debe contener una dirección de correo válida.',
-            'is_unique' => 'El Email ingresado ya está registrado.'
-        ]);
-        $this->form_validation->set_rules('telefono', 'Teléfono', 'numeric|exact_length[8]', [
-            'numeric' => 'El campo Teléfono debe contener solo números.',
-            'exact_length' => 'El campo Teléfono debe tener exactamente 8 dígitos.'
-        ]);
-        $this->form_validation->set_rules('nombre_usuario', 'Nombre de Usuario', 'required|min_length[4]|max_length[20]|is_unique[usuarios.nombre_usuario]', [
-            'required' => 'El campo Nombre de Usuario es obligatorio.',
-            'min_length' => 'El campo Nombre de Usuario debe tener al menos 4 caracteres.',
-            'max_length' => 'El campo Nombre de Usuario debe tener como máximo 20 caracteres.',
-            'is_unique' => 'El Nombre de Usuario ingresado ya está registrado.'
-        ]);
-        $this->form_validation->set_rules('rol', 'Rol', 'required', [
-            'required' => 'Debe seleccionar un rol.'
-        ]);
-        $this->form_validation->set_rules('password', 'Contraseña', 'required|min_length[8]|callback_valid_password', [
-            'required' => 'El campo Contraseña es obligatorio.',
-            'min_length' => 'El campo Contraseña debe tener al menos 8 caracteres.',
-            'valid_password' => 'El campo Contraseña debe incluir al menos una letra mayúscula, una letra minúscula, un número y un carácter especial.'
-        ]);
-        $this->form_validation->set_rules('password_confirm', 'Repetir Contraseña', 'required|matches[password]', [
-            'required' => 'El campo Repetir Contraseña es obligatorio.',
-            'matches' => 'Las contraseñas no coinciden.'
-        ]);
+    {
+        $this->load->library('form_validation');
 
-        if ($this->form_validation->run() === TRUE) {
-            // Preparar los datos para insertar en la base de datos
-            $data = [
-                'nombre' => $this->input->post('nombre'),
-                'email' => $this->input->post('email'),
-                'nombre_usuario' => $this->input->post('nombre_usuario'),
-                'password' => md5($this->input->post('password')),
-                'rol' => $this->input->post('rol')
-            ];
+        $this->form_validation->set_rules('nombre', 'Nombre', 'required', array('required' => 'El campo %s es obligatorio.'));
+        $this->form_validation->set_rules('primer_apellido', 'Primer Apellido', 'required', array('required' => 'El campo %s es obligatorio.'));
+        $this->form_validation->set_rules('segundo_apellido', 'Segundo Apellido','trim');
+        $this->form_validation->set_rules('email', 'Correo Electrónico', 'required|valid_email|is_unique[Usuarios.email]', array(
+            'required' => 'El campo %s es obligatorio.',
+            'valid_email' => 'El campo %s debe contener una dirección de correo válida.',
+            'is_unique' => 'El %s ya está en uso.'
+        ));
+        $this->form_validation->set_rules('telefono', 'Teléfono', 'trim'); // Opcional, no obligatorio
+        $this->form_validation->set_rules('rol', 'Rol', 'required', array('required' => 'El campo %s es obligatorio.'));
 
-            // Manejo de la imagen (si se sube)
+        if ($this->form_validation->run() == FALSE) {
+            $this->load->view('templates/header');
+            $this->load->view('templates/navbar');
+            $this->load->view('templates/sidebar');
+            $this->load->view('usuarios/agregar');
+            $this->load->view('templates/footer');
+        } else {
+            // Procesar los datos del formulario
+            $data['nombre'] = $this->input->post('nombre');
+            $data['primer_apellido'] = $this->input->post('primer_apellido');
+            $data['segundo_apellido'] = $this->input->post('segundo_apellido');
+            $data['email'] = $this->input->post('email');
+            $data['telefono'] = $this->input->post('telefono'); // Opcional
+            $data['rol'] = $this->input->post('rol');
+
+            // Generar nombre de usuario y contraseña
+            $us_generado = $this->generarUsuario($this->input->post('nombre'));
+            $pass_generado = $this->generarContrasena($this->input->post('nombre'), $this->input->post('email'));
+            $hash_pass = md5($pass_generado);
+
+            $data['nombre_usuario'] = $us_generado;
+            $data['password'] = $hash_pass;
+
+            // Manejo de la imagen (opcional)
             if (!empty($_FILES['imagen']['name'])) {
-                $config['upload_path'] = './uploads/usuarios/';
-                $config['allowed_types'] = 'jpg|jpeg|png';
-                $config['max_size'] = 2048; // 2MB máximo
-                $config['file_name'] = $this->input->post('nombre_usuario') . '_' . time();
-
-                $this->load->library('upload', $config);
-
-                if ($this->upload->do_upload('imagen')) {
-                    $uploadData = $this->upload->data();
-                    $data['imagen'] = $uploadData['file_name'];
+                $imagen_procesada = $this->procesar_imagen($_FILES['imagen'], $us_generado);
+                if ($imagen_procesada) {
+                    $data['imagen'] = $imagen_procesada;
                 } else {
-                    $this->session->set_flashdata('error', $this->upload->display_errors());
-                    redirect('usuarios/agregar');
+                    $data['imagen'] = null; // Si hay error en el procesamiento
                 }
+            } else {
+                $data['imagen'] = null; // No se subió imagen
             }
 
-            $this->Usuario_model->insertar_usuario($data);
-            $this->session->set_flashdata('mensaje', 'Usuario agregado correctamente.');
-            redirect('usuarios');
-        } else {
-            $this->session->set_flashdata('error', validation_errors());
+            // Guardar los datos en la base de datos
+            if ($this->Usuario_model->agregar_usuario($data)) {
+                if ($this->enviarContrasenaEmail($data['email'], $us_generado, $pass_generado)) {
+                    $this->session->set_flashdata("success", "Usuario guardado y correo enviado correctamente.");
+                } else {
+                    $this->session->set_flashdata("warning", "Usuario guardado, pero no se pudo enviar el correo.");
+                }
+                redirect(base_url() . "index.php/usuarios");
+            } else {
+                $this->session->set_flashdata("error", "No se pudo guardar el usuario.");
+                redirect(base_url() . "index.php/usuarios/agregar");
+            }
         }
     }
 
-    $this->load->view('templates/header');
-    $this->load->view('templates/navbar');
-    $this->load->view('templates/sidebar');
-    $this->load->view('usuarios/agregar');
-    $this->load->view('templates/footer');
-}
+    public function procesar_imagen($imagen_subida, $nombre_usuario)
+    {
+        $config['upload_path'] = './assets/img/usuarios/';
+        $config['allowed_types'] = 'jpg|jpeg|png';
+        $config['max_size'] = 2048; // Tamaño máximo 2MB
+        $config['file_name'] = $nombre_usuario . '.' . pathinfo($imagen_subida['name'], PATHINFO_EXTENSION);
+        $this->upload->initialize($config);
 
-// Validación de la contraseña
-public function valid_password($password)
-{
-    if (!preg_match('/[A-Z]/', $password) || !preg_match('/[a-z]/', $password) || !preg_match('/[0-9]/', $password) || !preg_match('/[\W_]/', $password)) {
-        $this->form_validation->set_message('valid_password', 'El campo Contraseña debe incluir al menos una letra mayúscula, una letra minúscula, un número y un carácter especial.');
-        return FALSE;
-    }
-    return TRUE;
-}
+        if ($this->upload->do_upload('imagen')) {
+            $ruta_imagen = $config['upload_path'] . $config['file_name'];
 
-// Validación del archivo
-public function file_check($str)
-{
-    $allowed_mime_type_arr = ['image/jpeg', 'image/png'];
-    $mime = get_mime_by_extension($_FILES['imagen']['name']);
-    if (isset($_FILES['imagen']['name']) && $_FILES['imagen']['name'] != "") {
-        if (in_array($mime, $allowed_mime_type_arr)) {
-            return TRUE;
-        } else {
-            $this->form_validation->set_message('file_check', 'El archivo debe ser una imagen en formato JPG, JPEG o PNG.');
-            return FALSE;
+            // Verificar el tipo de imagen
+            $tipo_imagen = getimagesize($ruta_imagen);
+            switch ($tipo_imagen['mime']) {
+                case 'image/jpeg':
+                    $imagen_original = imagecreatefromjpeg($ruta_imagen);
+                    break;
+                case 'image/png':
+                    $imagen_original = imagecreatefrompng($ruta_imagen);
+                    break;
+                default:
+                    return null; // Tipo de imagen no soportado
+            }
+
+            if ($imagen_original) {
+                $ancho_original = imagesx($imagen_original);
+                $alto_original = imagesy($imagen_original);
+
+                // Definir el tamaño del cuadrado (el lado más corto)
+                $tamaño_cuadrado = min($ancho_original, $alto_original);
+
+                // Coordenadas para centrar el recorte
+                $x_centro = ($ancho_original - $tamaño_cuadrado) / 2;
+                $y_centro = ($alto_original - $tamaño_cuadrado) / 2;
+
+                // Crear una imagen cuadrada recortada
+                $imagen_cuadrada = imagecrop($imagen_original, [
+                    'x' => $x_centro,
+                    'y' => $y_centro,
+                    'width' => $tamaño_cuadrado,
+                    'height' => $tamaño_cuadrado
+                ]);
+
+                if ($imagen_cuadrada) {
+                    // Guardar la imagen recortada con el nombre generado
+                    switch ($tipo_imagen['mime']) {
+                        case 'image/jpeg':
+                            imagejpeg($imagen_cuadrada, $ruta_imagen);
+                            break;
+                        case 'image/png':
+                            imagepng($imagen_cuadrada, $ruta_imagen);
+                            break;
+                    }
+
+                    // Liberar memoria
+                    imagedestroy($imagen_cuadrada);
+                    imagedestroy($imagen_original);
+
+                    return $config['file_name']; // Retornar el nombre de la imagen procesada
+                }
+            }
         }
-    } else {
-        return TRUE;
+
+        return null; // Retornar null si algo falla
     }
-}
 
 
+    private function generarUsuario($nombre)
+    {
+        $num_aleatorio = rand(10, 99);
+        $letras = '';
+
+        // Generar dos letras minúsculas aleatorias
+        for ($i = 0; $i < 2; $i++) {
+            $letra = chr(rand(97, 122)); // Generar letra minúscula
+            $letras .= $letra;
+        }
+
+        // Cortar el nombre hasta el primer espacio y convertir a minúsculas
+        $parte_nombre = strtolower(strtok($nombre, ' '));
+
+        return $parte_nombre . $num_aleatorio . $letras;
+    }
+
+    private function generarContrasena($nombre, $email)
+    {
+        $letras = '';
+        for ($i = 0; $i < 3; $i++) {
+            $letra = chr(rand(97, 122)); // Generar letra minúscula
+            if (rand(0, 1) === 1) {
+                $letra = strtoupper($letra); // Convertir a mayúscula aleatoriamente
+            }
+            $letras .= $letra;
+        }
+
+        $parte_nombre = strtoupper(substr($nombre, 0, 3));
+        $parte_email = substr($email, 0, 2);
+        $num_aleatorio = rand(10, 99);
+
+        return $letras . $parte_nombre . $parte_email . $num_aleatorio;
+    }
+
+    private function enviarContrasenaEmail($email, $nombre_usuario, $password)
+    {
+        $this->email->from('crenasasrl2@gmail.com', 'CRENASA SRL'); // Remitente
+        $this->email->to($email);
+        $this->email->subject('Detalles de tu cuenta');
+        $this->email->message("Tu nombre de usuario es: $nombre_usuario<br>Tu contraseña es: $password");
+
+        if ($this->email->send()) {
+            log_message('info', 'Correo enviado correctamente a: ' . $email);
+            return true;
+        } else {
+            log_message('error', 'No se pudo enviar el correo a: ' . $email);
+            log_message('error', $this->email->print_debugger(['headers']));
+            return false;
+        }
+    }
 
     public function editar($usuario_id)
     {
-        if ($this->input->post()) {
-            $this->form_validation->set_rules('nombre', 'Nombre Completo', 'required|alpha_spaces|min_length[3]|max_length[50]');
-            $this->form_validation->set_rules('email', 'Email', 'required|valid_email|is_unique[usuarios.email]');
-            $this->form_validation->set_rules('telefono', 'Teléfono', 'numeric|exact_length[8]');
-            $this->form_validation->set_rules('nombre_usuario', 'Nombre de Usuario', 'required|min_length[4]|max_length[20]|is_unique[usuarios.nombre_usuario]');
-            $this->form_validation->set_rules('rol', 'Rol', 'required');
-            $this->form_validation->set_rules('password', 'Contraseña', 'required|min_length[8]|callback_valid_password');
-            $this->form_validation->set_rules('password_confirm', 'Repetir Contraseña', 'required|matches[password]');
+        // Validación de los campos obligatorios
+        $this->form_validation->set_rules('nombre', 'Nombre Completo', 'required');
+        $this->form_validation->set_rules('email', 'Email', 'required|valid_email');
+        $this->form_validation->set_rules('nombre_usuario', 'Nombre de Usuario', 'required');
 
+        if ($this->form_validation->run() == FALSE) {
+            // Obtener la información del usuario para la vista
+            $data['usuario'] = $this->Usuario_model->obtener_usuario($usuario_id);
 
-            if ($this->form_validation->run() === TRUE) {
-                $data = [
-                    'nombre' => $this->input->post('nombre'),
-                    'email' => $this->input->post('email'),
-                    'nombre_usuario' => $this->input->post('nombre_usuario'),
-                    'rol' => $this->input->post('rol'),
-                    'ultima_modificacion' => date('Y-m-d H:i:s')
-                ];
+            // Cargar las vistas
+            $this->load->view('templates/header');
+            $this->load->view('templates/navbar');
+            $this->load->view('templates/sidebar');
+            $this->load->view('usuarios/editar', $data); // Enviar los datos a la vista de edición
+            $this->load->view('templates/footer');
+        } else {
+            // Recoger datos del formulario
+            $data['nombre'] = $this->input->post('nombre');
+            $data['nombre_usuario'] = $this->input->post('nombre_usuario');
+            $data['email'] = $this->input->post('email');
+            $data['telefono'] = $this->input->post('telefono');
 
-                // Manejo de la imagen (si se sube una nueva)
-                if (!empty($_FILES['imagen']['name'])) {
-                    $config['upload_path'] = './uploads/usuarios/';
-                    $config['allowed_types'] = 'jpg|jpeg|png';
-                    $config['max_size'] = 2048; // 2MB máximo
-                    $config['file_name'] = $this->input->post('nombre_usuario') . '_' . time();
+            // Manejo de la imagen (opcional)
+            if (!empty($_FILES['imagen']['name'])) {
+                $config['upload_path'] = './assets/img/usuarios/';
+                $config['allowed_types'] = 'jpg|jpeg|png';
+                $config['file_name'] = $usuario_id . '.' . pathinfo($_FILES['imagen']['name'], PATHINFO_EXTENSION); // Nombre del archivo basado en el ID del usuario
 
-                    $this->load->library('upload', $config);
+                $this->upload->initialize($config);
 
-                    if ($this->upload->do_upload('imagen')) {
-                        $uploadData = $this->upload->data();
-                        $data['imagen'] = $uploadData['file_name'];
-                    } else {
-                        $this->session->set_flashdata('error', $this->upload->display_errors());
-                        redirect('usuarios/editar/' . $usuario_id);
-                    }
+                if ($this->upload->do_upload('imagen')) {
+                    $data['imagen'] = $config['file_name'];
                 }
-
-                if ($this->input->post('password')) {
-                    $data['password'] = password_hash($this->input->post('password'), PASSWORD_BCRYPT);
-                }
-
-                $this->Usuario_model->editar_usuario($usuario_id, $data);
-                $this->session->set_flashdata('mensaje', 'Usuario actualizado correctamente.');
-                redirect('usuarios');
-            } else {
-                $this->session->set_flashdata('error', validation_errors());
             }
+
+            // Actualizar datos del usuario en la base de datos
+            $this->Usuario_model->editar_usuario($usuario_id, $data);
+
+            // Mensaje de éxito y redirección
+            $this->session->set_flashdata('mensaje', 'Usuario editado correctamente.');
+            redirect('usuarios/info/' . $usuario_id, 'refresh');
         }
-
-        $data['usuario'] = $this->Usuario_model->obtener_usuario_por_id($usuario_id);
-        if (!$data['usuario']) {
-            show_404();
-        }
-
-        $this->load->view('templates/header');
-        $this->load->view('templates/navbar');
-        $this->load->view('templates/sidebar');
-        $this->load->view('usuarios/editar', $data);
-        $this->load->view('templates/footer');
-    }
-
-    public function eliminar($usuario_id)
-    {
-        $this->Usuario_model->eliminar_usuario($usuario_id);
-        $this->session->set_flashdata('mensaje', 'Usuario eliminado correctamente.');
-        redirect('usuarios');
     }
 
     public function info($usuario_id)
@@ -217,6 +266,17 @@ public function file_check($str)
         $this->load->view('templates/footer');
     }
 
+
+
+
+
+
+    public function eliminar($usuario_id)
+    {
+        $resp = $this->Usuario_model->eliminar_usuario($usuario_id);
+        $this->session->set_flashdata($resp[0], $resp[1]);
+        redirect(base_url() . 'index.php/usuarios');
+    }
     public function eliminados()
     {
         $data['usuarios'] = $this->Usuario_model->obtener_usuarios_eliminados();
