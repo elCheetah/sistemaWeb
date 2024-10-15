@@ -4,7 +4,7 @@
             <div class="col-sm-6 p-md-0">
                 <div class="welcome-text">
                     <h4>Información Personal del Usuario</h4>
-                    <p class="mb-0"><?php echo $usuario['nombre']; ?></p>
+                    <p class="mb-0"><?php echo $usuario['nombre'].' '.$usuario['primer_apellido'].' '.$usuario['segundo_apellido']; ?></p>
                 </div>
             </div>
             <div class="col-sm-6 p-md-0 justify-content-sm-end mt-2 mt-sm-0 d-flex">
@@ -13,7 +13,7 @@
                         <a href="<?= site_url('usuarios/index') ?>">Usuarios</a>
                     </li>
                     <li class="breadcrumb-item active">
-                        
+
                         <a href="<?= site_url('usuarios/editar/' . $usuario['usuario_id']) ?>">Editar</a>
                     </li>
                 </ol>
@@ -27,9 +27,15 @@
                             <h4 class="text-primary mb-4">Perfil</h4>
                             <div class="my-profile">
                                 <?php
-                                $imagen = !empty($usuario['imagen']) ? $usuario['imagen'] : 'default.jpg';
+                                if (!empty($usuario['imagen']) && $usuario['imagen'] !== null) {
+                                    // Si la imagen no es vacía ni nula, mostrar la imagen del usuario
+                                    $ruta_imagen = base_url('assets/img/usuarios/' . $usuario['imagen']);
+                                } else {
+                                    // Si la imagen es vacía o nula, mostrar la imagen por defecto
+                                    $ruta_imagen = base_url('assets/img/usuarios/default.jpg');
+                                }
                                 ?>
-                                <img src="<?php echo base_url(); ?>/assets/img/usuarios/default.jpg" alt=""
+                                <img src="<?php echo $ruta_imagen; ?>" alt="Imagen de perfil"
                                     class="rounded-circle mr-2 width36 height36 border border-primary">
                             </div>
 

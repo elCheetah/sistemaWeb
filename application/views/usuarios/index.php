@@ -1,4 +1,5 @@
 <div class="content-body">
+
     <div class="container-fluid">
         <div class="row page-titles mx-0">
             <div class="col-sm-6 p-md-0">
@@ -18,7 +19,6 @@
 
         <div class="row">
             <div class="col-12">
-
                 <div class="card">
                     <div class="card-header d-sm-flex d-block">
                         <div class="mr-auto mb-sm-0 mb-3">
@@ -26,16 +26,18 @@
                             <span>Hola</span>
                         </div>
 
-                        <a href="javascript:void(0);" class="btn btn-info light mr-3">
-                            <i class="las la-download scale3 mr-2"></i>Importar en Csv
+                        <a href="<?= site_url('pdfController/generar_pdf') ?>" class="btn btn-info light mr-3">
+                            <i class="las la-download scale3 mr-2"></i>Descargar PDF
                         </a>
+
                         <a href="javascript:void(0);" class="btn btn-info">+ Agregar Usuario</a>
+                    </div>
+                    <div class="card-header">
+                        <h4 class="card-title">Lista de Usuarios</h4>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table id="example3"
-                                class="table  display mb-4 dataTablesCard short-one card-table text-black table-hover"
-                                style="min-width: 845px">
+                            <table id="example3" class="display" style="min-width: 845px">
                                 <thead>
                                     <tr>
                                         <th><strong>ID</strong></th>
@@ -55,17 +57,26 @@
                                             <td><strong><?= $contador++ ?></strong></td>
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    <img src="<?php echo base_url(); ?>/assets/img/usuarios/default.jpg"
-                                                        class="rounded-circle mr-2 width36 height36" alt="" with="40px"
-                                                        height="40px">
+                                                    <?php
+                                                    if (!empty($usuario['imagen']) && $usuario['imagen'] !== null) {
+                                                        // Si la imagen no es vacía ni nula, mostrar la imagen del usuario
+                                                        $ruta_imagen = base_url('assets/img/usuarios/' . $usuario['imagen']);
+                                                    } else {
+                                                        // Si la imagen es vacía o nula, mostrar la imagen por defecto
+                                                        $ruta_imagen = base_url('assets/img/usuarios/default.jpg');
+                                                    }
+                                                    ?>
+                                                    <img src="<?php echo $ruta_imagen; ?>"
+                                                        class="rounded-circle mr-2 width36 height36 border border-primary"
+                                                        alt="" width="40px" height="40px">
                                                     <span>
                                                         <?= $usuario['nombre'] ?>
                                                         <?= isset($usuario['primer_apellido']) ? ' ' . $usuario['primer_apellido'] : '' ?>
                                                         <?= isset($usuario['segundo_apellido']) ? ' ' . $usuario['segundo_apellido'] : '' ?>
                                                     </span>
                                                 </div>
-
                                             </td>
+
                                             <td><?= $usuario['email'] ?></td>
                                             <td><?= $usuario['telefono'] ?></td>
                                             <td>
@@ -116,6 +127,7 @@
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
+
                         </div>
                     </div>
                 </div>
