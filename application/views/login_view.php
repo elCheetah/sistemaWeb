@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
     <!-- Custom CSS -->
     <style>
+        /*
         body {
             background: linear-gradient(135deg, #F0F6E6 0%, #C3DD9B 100%);
             display: flex;
@@ -19,7 +20,27 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-        }
+        }*/
+        body {
+    /* Degradado como fondo principal */
+    background: linear-gradient(135deg, #F0F6E6 0%, #C3DD9B 100%);
+
+    /* Patrón de imagen sobre el degradado */
+    background-image: url('<?= base_url('assets/img/patron.png') ?>');
+    background-repeat: repeat; /* Repetir la imagen horizontal y verticalmente */
+    background-size: auto; /* La imagen de patrón en su tamaño original */
+
+    /* La imagen de patrón se coloca encima del degradado */
+    background-blend-mode: normal; /* Mezcla normal, la imagen simplemente se superpone */
+    
+    /* Estilos para el centrado del contenido */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
         .login-box {
             width: 100%;
             max-width: 400px;
