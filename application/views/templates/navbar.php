@@ -867,23 +867,34 @@
 						</li>
 						<li class="nav-item dropdown header-profile">
 							<a class="nav-link" href="#" role="button" data-toggle="dropdown">
-								<img src="<?php echo base_url(); ?>/assets/images/profile/pic1.jpg" width="20" alt="">
+
+								<?php
+								if (!empty($this->session->userdata('imagen')) && $this->session->userdata('imagen') !== null) {
+									// Si la imagen no es vacía ni nula, mostrar la imagen del usuario
+									$ruta_imagen = base_url('assets/img/usuarios/' . $this->session->userdata('imagen'));
+								} else {
+									// Si la imagen es vacía o nula, mostrar la imagen por defecto
+									$ruta_imagen = base_url('assets/img/usuarios/default.jpg');
+								}
+								?>
+
+
+								<img class="rounded-circle mr-2 width36 height36 border border-primary"
+									src="<?php echo $ruta_imagen; ?>" width="20" alt="Profile Picture">
 								<div class="header-info">
 									<span>
-									<?php
-									$nombre = $this-> session->set_userdata('nombre');
-									echo isset($nombre) ? $nombre: 'Abraham Espinza';?>	
+										<?php
+										echo $this->session->userdata('primer_apellido') . ' ' . $this->session->userdata('segundo_apellido') . ' ' . $this->session->userdata('nombre ');
+										?>
+
 									</span>
 									<small>
-									<?php
-									$rol = $this-> session->set_userdata('rol');
-									echo isset($rol) ? $rol: 'Administrador';
-									?>	
+										<?php echo $this->session->userdata('rol ') ?>
 									</small>
 								</div>
 							</a>
 							<div class="dropdown-menu dropdown-menu-right">
-								<a href="app-profile.html" class="dropdown-item ai-icon">
+								<a  href="<?= site_url('usuarios/perfil');?>" class="dropdown-item ai-icon">
 									<svg id="icon-user1" xmlns="http://www.w3.org/2000/svg" class="text-primary"
 										width="18" height="18" viewbox="0 0 24 24" fill="none" stroke="currentColor"
 										stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

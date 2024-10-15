@@ -17,6 +17,7 @@
     ***********************************-->
 
 <!-- Required vendors -->
+<script src="<?php echo base_url(); ?>/assets/js/validaciones/validaciones.js"></script>
 <!-- Importa la librería global de JavaScript que incluye varias funcionalidades necesarias -->
 <script src="<?php echo base_url(); ?>/assets/vendor/global/global.min.js"></script>
 
@@ -45,8 +46,8 @@
 <script src="<?php echo base_url(); ?>/assets/js/plugins-init/datatables.init.js"></script>
 
 <script src="<?php echo base_url(); ?>/assets/vendor/bootstrap-select/dist/js/bootstrap-select.min.js"></script>
-    <script src="<?php echo base_url(); ?>/assets/vendor/select2/js/select2.full.min.js"></script>
-    <script src="<?php echo base_url(); ?>/assets/js/plugins-init/select2-init.js"></script>
+<script src="<?php echo base_url(); ?>/assets/vendor/select2/js/select2.full.min.js"></script>
+<script src="<?php echo base_url(); ?>/assets/js/plugins-init/select2-init.js"></script>
 
 <!-- Importa un script personalizado para inicializar otras configuraciones o funciones -->
 <script src="<?php echo base_url(); ?>/assets/js/custom.min.js"></script>
@@ -55,7 +56,8 @@
 <script src="<?php echo base_url(); ?>/assets/js/deznav-init.js"></script>
 
 <!-- Importa un script de Cloudflare para evitar la decodificación de direcciones de correo -->
-<script data-cfasync="false" src="<?php echo base_url(); ?>/assets/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+<script data-cfasync="false"
+    src="<?php echo base_url(); ?>/assets/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
 
 <!-- Importa un script para demostraciones y pruebas en el dashboard -->
 <script src="<?php echo base_url(); ?>/assets/js/demo.js"></script>
@@ -63,5 +65,13 @@
 <!-- Importa un script para manejar un cambiador de estilos (style switcher) -->
 <script src="<?php echo base_url(); ?>/assets/js/styleSwitcher.js"></script>
 
+<script src="<?php echo base_url(); ?>/assets/vendor/sweetalert2/dist/sweetalert2.min.js"></script>
+<script src="<?php echo base_url(); ?>/assets/js/plugins-init/sweetalert.init.js"></script>
+
+<!-- Jquery Validation -->
+<script src="<?php echo base_url(); ?>/assets/vendor/jquery-validation/jquery.validate.min.js"></script>
+
+
 </body>
+
 </html>
